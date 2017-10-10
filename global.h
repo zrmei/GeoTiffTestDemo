@@ -1,6 +1,9 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
+#include <atomic>
+#include <mutex>
+
 #define MoveToOtherThread(obj) do { \
     QThread *__t = new QThread(); \
     __t->setProperty("self", true);\

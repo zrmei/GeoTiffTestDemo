@@ -14,17 +14,23 @@
    <string>GeoTiffTestDemo</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QHBoxLayout" name="horizontalLayout">
+   <layout class="QHBoxLayout" name="horizontalLayout" stretch="4,2">
     <item>
-     <widget class="QSplitter" name="mainSplitter">
-      <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
+     <widget class="QGroupBox" name="gbMap">
+      <property name="title">
+       <string>Map</string>
       </property>
-      <property name="lineWidth">
-       <number>3</number>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QWidget" name="mapViewContainer" native="true"/>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="gbInfo">
+      <property name="title">
+       <string>Info</string>
       </property>
      </widget>
     </item>

@@ -1,20 +1,34 @@
 #include "QGtifReader.h"
 
-QGtifReader::QGtifReader(const QString &filepath, QObject *parent)
+Q_STATIC_INSTANCE(QGtifReader)
+
+QGtifReader::QGtifReader(QObject *parent)
     : QObject(parent)
-    , _map(QImage(filepath))
     , _tif(nullptr)
     , _gtif(nullptr)
+{}
+
+auto QGtifReader::setFilePath(const QString &filepath) -> void
 {
+    if(_gtif) { GTIFFree(_gtif); _gtif = nullptr; }
+    if(_tif) { XTIFFClose(_tif); _tif = nullptr; }
+
     _tif = XTIFFOpen(filepath.toStdString().c_str(), "r");
     if(_tif)
         _gtif = GTIFNew(_tif);
+
+    _map.load(filepath);
+}
+
+void QGtifReader::setRect(const QRect &rect)
+{
+
 }
 
 QGtifReader::~QGtifReader()
 {
     if(_gtif) GTIFFree(_gtif);
-    if(_tif) XTIFFClose(_tif);;
+    if(_tif) XTIFFClose(_tif);
 }
 
 bool QGtifReader::isVaild() const
@@ -34,12 +48,11 @@ auto QGtifReader::geoCoordinate2Point(const QGeoCoordinate &coord) const -> QPoi
 
 auto QGtifReader::dragTo(const QPoint &pos) -> void
 {
-
 }
 
 auto QGtifReader::getMap() const -> QImage
 {
-    return QImage();
+    return _map;
 }
 
 auto QGtifReader::_buildMap() -> void

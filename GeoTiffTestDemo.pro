@@ -11,6 +11,8 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = GeoTiffTestDemo
 TEMPLATE = app
 
+CONFIG += C++11
+
 DEFINES += APPLICATION_NAME='"\\"$${TARGET}\\""'
 
 # The following define makes your compiler emit warnings if you use
@@ -35,13 +37,19 @@ LIBS += -L$${OSGeo4W64}/bin -L$${OSGeo4W64}/lib $${OSGeo4W64}/lib/tiff.lib -lgeo
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    QGtifReader.cpp
+    QGtifReader.cpp \
+    MapView.cpp \
+    MapItem.cpp \
+    PointItem.cpp
 
 HEADERS += \
         mainwindow.h \
     QGtifReader.h \
     global.h \
-    logging.h
+    logging.h \
+    MapView.h \
+    MapItem.h \
+    PointItem.h
 
 FORMS += \
         mainwindow.ui

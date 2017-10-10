@@ -9,6 +9,8 @@
 #include "xtiffio.h"  /* for TIFF */
 #include "geotiffio.h" /* for GeoTIFF */
 
+#include "global.h"
+
 class QGtifReader: public QObject
 {
     Q_OBJECT
@@ -17,12 +19,11 @@ signals:
     void zoomChanged(double zoom);
 
 public:
-    QGtifReader(const QString &filepath, QObject *parent = nullptr);
-    ~QGtifReader();
+    Q_DECLARE_STATIC_INSTANCE(QGtifReader);
 
+    auto setFilePath(const QString &filepath) -> void;
+    auto setRect(const QRect &rect) ->void;
     auto isVaild() const -> bool;
-
-    auto setRect(const QRect &rect);
 
 public:
     auto setZoom(double zoom, const QPoint &center = QPoint()) -> void;
@@ -36,6 +37,9 @@ public:
     auto getMap() const -> QImage;
 
 private:
+    QGtifReader(QObject *parent = nullptr);
+    ~QGtifReader();
+
     auto _buildMap() -> void;
 
     auto _loadSettings() -> void;
@@ -52,6 +56,7 @@ private:
     GTIF *_gtif; /* GeoKey-level descriptor */
 
 };
+#define qGtifReader (QGtifReader::Instance())
 
 auto QGtifReader::getZoom() const -> double
 {
