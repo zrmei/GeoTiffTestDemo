@@ -1,18 +1,10 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
+#include <QtGlobal>
+#include <QVariant>
 #include <atomic>
 #include <mutex>
-
-#define MoveToOtherThread(obj) do { \
-    QThread *__t = new QThread(); \
-    __t->setProperty("self", true);\
-    obj->moveToThread(__t); \
-    QObject::connect(obj, &QObject::destroyed, __t, &QThread::terminate);\
-    __t->start(); \
-} while(false)
-
-#define TerminateThisThread(obj) do { if(obj->thread()->property("self").toBool()) obj->thread()->terminate();  } while(false)
 
 #define Q_DECLARE_STATIC_INSTANCE(classname)\
     static classname *Instance(); \
@@ -30,6 +22,11 @@ classname * classname::Instance() \
         }\
     });\
     return instance.data(); \
+}
+
+namespace Global {
+QVariant loadSettings(const QString &key, const QVariant &val = QVariant(), const QString &group = QString());
+void     saveSettings(const QString &key, const QVariant &val, const QString &group = QString());
 }
 
 #endif // GLOBAL_H

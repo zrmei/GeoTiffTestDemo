@@ -15,13 +15,16 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+protected:
+    virtual void resizeEvent(QResizeEvent *event) override;
+
+private slots:
+    void onClickedOnMap(QGeoCoordinate coord);
+    void on_pushButton_clicked();
+
 private:
     Ui::MainWindow *ui;
     MapView *_mapView;
-
-    // QWidget interface
-protected:
-    virtual void resizeEvent(QResizeEvent *event) override;
 };
 
 #endif // MAINWINDOW_H

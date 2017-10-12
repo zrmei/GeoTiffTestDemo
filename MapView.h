@@ -4,13 +4,19 @@
 #include <QGraphicsView>
 #include "MapItem.h"
 #include "PointItem.h"
+#include "PathItem.h"
+#include <QGeoCoordinate>
 
 class QWheelEvent;
 class QKeyEvent;
+class QGestureEvent;
 
-class MapView : public QGraphicsView
+class MapView : public QGraphicsView, public IClickedOnMap, public IItemMoving
 {
     Q_OBJECT
+signals:
+    void GeoCoordinateOnMap(QGeoCoordinate);
+
 public:
     explicit MapView(QWidget *parent = 0);
 
@@ -23,28 +29,37 @@ public:
 public:
     virtual bool event(QEvent *event) override;
 
-protected:
-    virtual void mouseMoveEvent(QMouseEvent *event) override;
-    virtual void mousePressEvent(QMouseEvent *event) override;
-    virtual void mouseReleaseEvent(QMouseEvent *event) override;
-    virtual void resizeEvent(QResizeEvent *event) override;
-    virtual void wheelEvent(QWheelEvent *event) override;
-
 public Q_SLOTS:
     void zoomIn();
     void zoomOut();
     void zoom(float scaleFactor);
     void translateF(QPointF delta);
 
+protected:
+    virtual void mouseMoveEvent(QMouseEvent *event) override;
+    virtual void mousePressEvent(QMouseEvent *event) override;
+    virtual void mouseReleaseEvent(QMouseEvent *event) override;
+    virtual void wheelEvent(QWheelEvent *event) override;
+
+    virtual void onClick(QPointF p) override;
+    virtual void onItemMoving() override;
+
+protected:
+    void gestureEvent(QGestureEvent *event);
+
 private:
-    Qt::MouseButton m_translateButton;
-    qreal m_translateSpeed;
-    qreal m_zoomDelta;
-    bool m_bMouseTranslate;
-    QPoint m_lastMousePos;
-    qreal m_scale;
-    QGraphicsScene _scene;
-    MapItem *_map;
-    PointItem *_pointItem;
+    void makePointItem(QPoint pos);
+    void reBuildPath();
+
+private:
+    qreal            _translateSpeed;
+    qreal            _zoomDelta;
+    bool             _bMouseTranslate;
+    QPoint           _lastMousePos;
+    qreal            _scale;
+    QGraphicsScene   _scene;
+    MapItem          *_map;
+    PathItem         *_pathitem;
+    QList<PointItem*> _pointItems;
 };
 #endif // MAPVIEW_H
