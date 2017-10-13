@@ -12,7 +12,6 @@ Q_LOGGING_CATEGORY_DEFAULT(MapItem)
 
 MapItem::MapItem(QGraphicsItem *parent)
     : QGraphicsItem(parent)
-    , _clickObj(nullptr)
 {}
 
 QRectF MapItem::boundingRect() const
@@ -28,10 +27,4 @@ void MapItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget
     auto map = qGtifReader->getMap();
     painter->drawImage(QRect(0, 0, map.width(), map.height()), map);
     painter->restore();
-}
-
-
-void MapItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
-{
-    if(_clickObj) _clickObj->onClick(event->pos());
 }

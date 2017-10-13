@@ -29,15 +29,14 @@ DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs depr
 
 include(3rdlibs/3rdlibs.pri)
 
-##DEPENDPATH += $$PWD/libs/libgeotiff/include
-#INCLUDEPATH += $$PWD/libs/libgeotiff
-#INCLUDEPATH += $$PWD/libs/tiff/libtiff
-#INCLUDEPATH += $$PWD/libs/proj/src
+{
+    DEFINES += QT_NO_DEBUG_OUTPUT SFT_NO_DEBUG
+    QT_BIN_DIR  = $$dirname(QMAKE_QMAKE)
 
-#LIBS += -L$$PWD/libs/tiff/libtiff -llibtiff
-#LIBS += -L$$PWD/libs/libgeotiff/build/lib/Release -lgeotiff -lgeotiff_i
-#LIBS += -L$$PWD/libs/libgeotiff/build/lib/Release -lxtiff
-#LIBS += -L$$PWD/libs/proj/src -lproj
+    DESTDIR_WIN = $$replace(OUT_PWD, "/", "\\")
+    DEPLOY_TARGET = $$shell_quote($$shell_path($$DESTDIR_WIN\\release\\$${TARGET}.exe))
+    QMAKE_POST_LINK += $$escape_expand(\\n) $$QT_BIN_DIR\\windeployqt --no-compiler-runtime  $${DEPLOY_TARGET}
+}
 
 SOURCES += \
         main.cpp \
@@ -61,3 +60,6 @@ HEADERS += \
 
 FORMS += \
         mainwindow.ui
+
+RESOURCES += \
+    res.qrc

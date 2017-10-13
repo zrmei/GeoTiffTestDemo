@@ -3,17 +3,19 @@
 
 #include <QGraphicsItem>
 #include <QFont>
+#include <QPen>
 
-#define DEFALUT_FONT_SIZE 32
+#define DEFALUT_FONT_SIZE 18
+#define DEFALUT_PEN_SIZE 2
 class MapItem;
 class PathItem : public QGraphicsItem
 {
 public:
     PathItem(QGraphicsItem *parent = Q_NULLPTR);
 
-    void updatePoints(QList<QPointF> &&posList);
+    void updatePoints(QList<QPointF> &&posList = QList<QPointF>());
 
-    void setFontScale(double scale) { _font.setPointSizeF(scale * DEFALUT_FONT_SIZE); }
+    inline void setFontScale(double scale);
 
 public:
     virtual QRectF boundingRect() const override;
@@ -22,8 +24,15 @@ public:
 private:
     QPainterPath _posPaths;
     QFont _font;
-    QList<std::tuple<QPointF, QString>> _texts;
+    QList<std::tuple<QRect, QString>> _texts;
+    QPen _pen;
 
 };
+
+void PathItem::setFontScale(double scale)
+{
+    _font.setPointSizeF(scale * DEFALUT_FONT_SIZE);
+    _pen.setWidth(scale * DEFALUT_PEN_SIZE);
+}
 
 #endif // PATHITEM_H
