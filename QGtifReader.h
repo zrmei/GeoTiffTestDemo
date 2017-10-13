@@ -22,7 +22,7 @@ public:
     Q_DECLARE_STATIC_INSTANCE(QGtifReader);
 
     auto setFilePath(const QString &filepath) -> bool;
-    auto isVaild() const -> bool;
+    auto isVaild() const -> bool { return _tif && _gtif; }
 
 public:
     auto point2GeoCoordinate(const QPoint &pos) const -> QGeoCoordinate;
@@ -35,26 +35,19 @@ public:
      * \param point y at image map
      */
     auto getDistanceMByPoint(const QPointF &x, const QPointF &y) const -> double;
-
-    auto getMap() const ->const QImage &;
+    auto getMap() const -> const QImage & { return _map; }
+    auto getPCSInfo() const -> QString;
 
 private:
     QGtifReader(QObject *parent = nullptr);
     ~QGtifReader();
 
 private:
-    double _zoom;
-    QPoint _curMouseCenter;
     QImage _map;
-    QImage _scaledMap;
-    QRect  _rect;
 
     TIFF     *_tif;  /* TIFF-level descriptor */
     GTIF     *_gtif; /* GeoKey-level descriptor */
     GTIFDefn *_defn;
-
-    QGeoCoordinate _left, _top, _bottom, _right;
-
 };
 
 #define qGtifReader (QGtifReader::Instance())

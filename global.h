@@ -27,6 +27,17 @@ classname * classname::Instance() \
 namespace Global {
 QVariant loadSettings(const QString &key, const QVariant &val = QVariant(), const QString &group = QString());
 void     saveSettings(const QString &key, const QVariant &val, const QString &group = QString());
+
+
+enum class GeoType {
+    Latitude,
+    Longitude
+};
+
+QString MakeGeoPrintable(double val, GeoType type);
+QString MakeMeterPrintable(double val);
+
+
 }
 
 #endif // GLOBAL_H

@@ -12,6 +12,7 @@
 #include "logging.h"
 
 Q_LOGGING_CATEGORY_DEFAULT(QGtifReader)
+Q_STATIC_INSTANCE(QGtifReader)
 
 static const char *CSVFileOverride( const char * pszInput )
 
@@ -26,9 +27,6 @@ static const char *CSVFileOverride( const char * pszInput )
 
     return ( szPath );
 }
-
-
-Q_STATIC_INSTANCE(QGtifReader)
 
 QGtifReader::QGtifReader(QObject *parent)
     : QObject(parent)
@@ -100,18 +98,19 @@ QGtifReader::~QGtifReader()
     if(_tif) XTIFFClose(_tif);
 }
 
-bool QGtifReader::isVaild() const
-{
-    return _tif && _gtif;
-}
-
 auto QGtifReader::point2GeoCoordinate(const QPoint &pos) const -> QGeoCoordinate
 {
+    if(!isVaild())
+        return QGeoCoordinate(0, 0, 0);
+
     return _point2GeoCoordinate(_gtif, _defn, pos.x(), pos.y());
 }
 
 auto QGtifReader::geoCoordinate2Point(const QGeoCoordinate &coord) const -> QPoint
 {
+    if(!isVaild())
+        return QPoint(0, 0);
+
     return _geoCoordinate2Point(_gtif, _defn, coord.latitude(), coord.longitude());
 }
 
@@ -137,7 +136,16 @@ auto QGtifReader::getDistanceMByPoint(const QPointF &x, const QPointF &y) const 
     return getDistanceM(point2GeoCoordinate(x.toPoint()), point2GeoCoordinate(y.toPoint()));
 }
 
-auto QGtifReader::getMap() const -> const QImage &
+auto QGtifReader::getPCSInfo() const -> QString
 {
-    return _map;
+    if(!isVaild())
+        return QString();
+
+    char *ppszEPSGName = nullptr;
+    GTIFGetPCSInfo(_defn->PCS, &ppszEPSGName, NULL, NULL, NULL);
+
+    if(ppszEPSGName == nullptr || strlen(ppszEPSGName) == 0)
+        return tr("No longitude and latitude found!");
+
+    return QStringLiteral("PCS: %1 (%2)").arg(_defn->PCS).arg(ppszEPSGName);
 }

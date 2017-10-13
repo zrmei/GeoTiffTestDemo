@@ -15,6 +15,10 @@
 
 Q_LOGGING_CATEGORY_DEFAULT(MapView)
 
+#define isPointAtItem(pos, Item) dynamic_cast<Item *>(scene()->itemAt(pos, transform()))
+#define isPointAtMap(pos)        isPointAtItem(pos, MapItem)
+#define isPointAtPointItem(pos)  isPointAtItem(pos, PointItem)
+
 MapView::MapView(QWidget *parent)
     : QGraphicsView(parent),
       _scale(1.0),
@@ -24,7 +28,6 @@ MapView::MapView(QWidget *parent)
       _pathitem(nullptr)
 {
     _map = new MapItem();
-    _map->registClickEvent(this);
     _scene.addItem(_map);
 
     _pathitem = new PathItem();
@@ -32,7 +35,7 @@ MapView::MapView(QWidget *parent)
 
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    setCursor(Qt::PointingHandCursor);
+    setCursor(Qt::ArrowCursor);
     setRenderHint(QPainter::Antialiasing);
     setMouseTracking(true);
 
@@ -71,12 +74,25 @@ qreal MapView::zoomDelta() const
     return _zoomDelta;
 }
 
-
 void MapView::mouseMoveEvent(QMouseEvent *event)
 {
+    QPointF pointAtMap = mapToScene(event->pos());
+\
     if (_bMouseTranslate){
-        QPointF mouseDelta = mapToScene(event->pos()) - mapToScene(_lastMousePos);
+        if(isPointAtMap(pointAtMap))
+            setCursor(Qt::ClosedHandCursor);
+        else
+            setCursor(Qt::ArrowCursor);
+
+        QPointF mouseDelta = pointAtMap - _lastImgPos;
         translateF(mouseDelta);
+    } else if(isPointAtMap(pointAtMap)) {
+        setCursor(Qt::CrossCursor);
+        auto coord = qGtifReader->point2GeoCoordinate(pointAtMap.toPoint());
+        emit GeoCoordinateOnMap(coord);
+        showToolTip(coord);
+    } else {
+        setCursor(Qt::ArrowCursor);
     }
 
     _lastMousePos = event->pos();
@@ -86,10 +102,12 @@ void MapView::mouseMoveEvent(QMouseEvent *event)
 void MapView::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
-        if(!dynamic_cast<PointItem *>(scene()->itemAt(mapToScene(event->pos()), transform())))
+        if(!isPointAtPointItem(mapToScene(event->pos())))
             _bMouseTranslate = true;
+
         _lastMousePos = event->pos();
-    } else  if(event->button() == Qt::RightButton) {
+        _lastImgPos = mapToScene(event->pos());
+    } else if(event->button() == Qt::RightButton) {
         makePointItem(event->pos());
     }
 
@@ -98,31 +116,25 @@ void MapView::mousePressEvent(QMouseEvent *event)
 
 void MapView::mouseReleaseEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton)
+    if (event->button() == Qt::LeftButton) {
         _bMouseTranslate = false;
+        setCursor(Qt::CrossCursor);
+    }
 
     QGraphicsView::mouseReleaseEvent(event);
 }
 
 void MapView::wheelEvent(QWheelEvent *event)
 {
+    setCursor(Qt::BusyCursor);
     QPoint scrollAmount = event->angleDelta();
     scrollAmount.y() > 0 ? zoomIn() : zoomOut();
+    setCursor(Qt::CrossCursor);
 }
 
 void MapView::gestureEvent(QGestureEvent *event)
 {
     /// \todo use Gesture
-//    if (QGesture *swipe = event->gesture(Qt::SwipeGesture)) {
-//        swipeTriggered(static_cast<QSwipeGesture *>(swipe));
-//   } else if (QGesture *pan = event->gesture(Qt::PanGesture))
-//        panTriggered(static_cast<QPanGesture *>(pan));
-//    else if (QGesture *tap = event->gesture(Qt::TapGesture))
-//        tapTriggered(static_cast<QTapGesture *>(tap));
-//    else if (QGesture *tapAndHold = event->gesture(Qt::TapAndHoldGesture))
-//        tapAndHoldTriggered(static_cast<QTapAndHoldGesture *>(tapAndHold));
-//    if (QGesture *pinch = event->gesture(Qt::PinchGesture))
-//        pinchTriggered(static_cast<QPinchGesture *>(pinch));
 }
 
 void MapView::makePointItem(QPoint pos)
@@ -144,9 +156,8 @@ void MapView::makePointItem(QPoint pos)
         }
     } else {
         auto pointItem = new PointItem(_map,std::move(p));
-        pointItem->setCtrlObj(this);
         _pointItems.append(pointItem);
-
+        pointItem->setCtrlObj(this);
         pointItem->setParentItem(_map);
         pointItem->setScale(1.0 / _scale);
     }
@@ -164,6 +175,18 @@ void MapView::reBuildPath()
 
     _pathitem->updatePoints(std::move(points));
     scene()->update();
+
+    emit pathBuildFinished(points);
+}
+
+void MapView::showToolTip(const QGeoCoordinate &Coord)
+{
+    using namespace Global;
+    setToolTip(QStringLiteral("Latitude: %1\nLongitude: %2\nAltitude: %3")
+               .arg(MakeGeoPrintable(Coord.latitude(), GeoType::Latitude))
+               .arg(MakeGeoPrintable(Coord.longitude(),GeoType::Longitude))
+               .arg(MakeMeterPrintable(Coord.altitude()))
+               );
 }
 
 void MapView::zoomIn()
@@ -189,6 +212,7 @@ void MapView::zoom(float scaleFactor)
            pointitem->setScale(1.0 / _scale);
         } else if(auto pathitem = dynamic_cast<PathItem *>(item)) {
             pathitem->setFontScale(1.0 / _scale);
+            reBuildPath();
          }
     }
 
@@ -203,6 +227,53 @@ void MapView::translateF(QPointF delta)
     centerOn(mapToScene(VIEW_WIDTH / 2.0 - delta.x(),  VIEW_HEIGHT / 2.0 - delta.y()));
 }
 
+void MapView::resloveView()
+{
+    QImage map = qGtifReader->getMap();
+    float scaleFactor = qMin(VIEW_WIDTH, VIEW_HEIGHT) * 1.0 / qMax(map.width(), map.height());
+
+    /// reset and then scale
+    zoom(1.0 / _scale * scaleFactor);
+
+    removeAllPathPoint();
+
+    centerOn(map.width() / 2, map.height() /2);
+    update();
+}
+
+void MapView::removePathPointAt(int idx)
+{
+    /// two points, delete last one
+    ++idx;
+
+    if(_pointItems.isEmpty() || idx > _pointItems.size())
+        return;
+
+    auto item = _pointItems.takeAt(idx);
+    scene()->removeItem(item);
+    delete item;
+
+    /// delete all where only two points
+    if(_pointItems.size() == 1) {
+        auto item = _pointItems.takeAt(0);
+        scene()->removeItem(item);
+        delete item;
+    }
+
+    reBuildPath();
+}
+
+void MapView::removeAllPathPoint()
+{
+    for(PointItem *item: _pointItems) {
+        scene()->removeItem(item);
+        delete item;
+    }
+
+    _pointItems.clear();
+    reBuildPath();
+}
+
 bool MapView::event(QEvent *event)
 {
     switch (event->type()) {
@@ -215,12 +286,6 @@ bool MapView::event(QEvent *event)
         return QGraphicsView::event(event);
     }
 
-}
-
-
-void MapView::onClick(QPointF p)
-{
-    emit GeoCoordinateOnMap(qGtifReader->point2GeoCoordinate(p.toPoint()));
 }
 
 void MapView::onItemMoving()

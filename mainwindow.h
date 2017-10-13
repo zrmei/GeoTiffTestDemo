@@ -16,15 +16,19 @@ public:
     ~MainWindow();
 
 protected:
-    virtual void resizeEvent(QResizeEvent *event) override;
+    virtual void resizeEvent(QResizeEvent *) override;
 
 private slots:
     void onClickedOnMap(QGeoCoordinate coord);
+    void onTifFileChanged();
+    void onCustomContextMenuRequested(const QPoint &pos);
+    void onPathBuildFinished(QList<QPointF> points);
     void on_pushButton_clicked();
 
 private:
     Ui::MainWindow *ui;
     MapView *_mapView;
+    QList<QPointF> _points;
 };
 
 #endif // MAINWINDOW_H

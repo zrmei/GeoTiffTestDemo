@@ -11,11 +11,12 @@ class QWheelEvent;
 class QKeyEvent;
 class QGestureEvent;
 
-class MapView : public QGraphicsView, public IClickedOnMap, public IItemMoving
+class MapView : public QGraphicsView, public IItemMoving
 {
     Q_OBJECT
 signals:
     void GeoCoordinateOnMap(QGeoCoordinate);
+    void pathBuildFinished(QList<QPointF>);
 
 public:
     explicit MapView(QWidget *parent = 0);
@@ -34,6 +35,10 @@ public Q_SLOTS:
     void zoomOut();
     void zoom(float scaleFactor);
     void translateF(QPointF delta);
+    void resloveView();
+
+    void removePathPointAt(int idx);
+    void removeAllPathPoint();
 
 protected:
     virtual void mouseMoveEvent(QMouseEvent *event) override;
@@ -41,7 +46,6 @@ protected:
     virtual void mouseReleaseEvent(QMouseEvent *event) override;
     virtual void wheelEvent(QWheelEvent *event) override;
 
-    virtual void onClick(QPointF p) override;
     virtual void onItemMoving() override;
 
 protected:
@@ -50,12 +54,14 @@ protected:
 private:
     void makePointItem(QPoint pos);
     void reBuildPath();
+    void showToolTip(const QGeoCoordinate &);
 
 private:
     qreal            _translateSpeed;
     qreal            _zoomDelta;
     bool             _bMouseTranslate;
     QPoint           _lastMousePos;
+    QPointF          _lastImgPos;
     qreal            _scale;
     QGraphicsScene   _scene;
     MapItem          *_map;

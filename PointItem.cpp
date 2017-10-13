@@ -29,7 +29,13 @@ QRectF PointItem::boundingRect() const
 void PointItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     painter->save();
-    painter->fillRect(QRect(_pos.x() - 8, _pos.y() - 8, 16, 16), Qt::red);
+    painter->setPen(Qt::red);
+
+    QPainterPath p;
+    p.addEllipse(_pos.x() - 8, _pos.y() - 8, 16, 16);
+    painter->fillPath(p, QBrush(QColor(255,255 ,255, 128)));
+
+    painter->drawEllipse(_pos.x() - 8, _pos.y() - 8, 16, 16);
     painter->restore();
 }
 
