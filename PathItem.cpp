@@ -38,7 +38,7 @@ void PathItem::updatePoints(QList<QPointF> &&posList)
 
        auto text = Global::MakeMeterPrintable(qGtifReader->getDistanceMByPoint(posList.at(i), posList.at(i - 1)));
 
-       width = fontMetrics.width(text);
+       width = fontMetrics.horizontalAdvance(text);
 
        auto textRect = QRect(center.x() - width / 2.0, center.y() - height / 2.0, width, height);
 
